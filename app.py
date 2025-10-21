@@ -224,6 +224,7 @@ st.title("Medical Triage System")
 st.markdown("""
 **About this system:**
 This Medical Triage System is designed to assist healthcare providers in prioritizing patient care based on reported symptoms. 
+The system now supports 6 common symptoms: Fever, Cough, Headache, Abdominal Pain, Fatigue, and Vomiting.
 Utilizing machine learning, it classifies patients into different urgency levels to help streamline the triage process and ensure timely intervention.
 
 **How to use:**
