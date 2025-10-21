@@ -71,6 +71,13 @@ TRIAGE_TIPS = {
     "Emergency condition":
         "Go to the hospital immediately, do not attempt home treatment, if possible have someone accompany you, bring any previous medication records if available."
 }
+## Map model output labels (Somali) to English for UI display
+SOMALI_TO_ENGLISH_LABEL = {
+    "Xaalad fudud (Daryeel guri)": "Mild condition (Home care)",
+    "Xaalad dhax dhaxaad eh (Bukaan socod)": "Moderate condition (Outpatient care)",
+    "Xaalad dhax dhaxaad ah (Bukaan socod)": "Moderate condition (Outpatient care)",
+    "Xaalad deg deg ah": "Emergency condition",
+}
 EXTRA_NOTICE = (
     "Important notice: This is a general assessment to help you understand your condition and next steps. "
     "If you are concerned about your condition, contact a healthcare provider."
@@ -247,6 +254,8 @@ if st.button("Assess"):
         x = make_input_df(payload)
         y_pred = pipe.predict(x)[0]
         label_so = decode_label(y_pred)
+        # Convert Somali model output to English for UI display
+        label_en = SOMALI_TO_ENGLISH_LABEL.get(label_so, str(label_so))
 
         # Light, modern result card with dynamic colors
         def triage_style(label_so: str):
@@ -256,7 +265,7 @@ if st.button("Assess"):
             if "moderate" in t or "outpatient" in t:
                 return ("#FFF8E1", "#8D6E00", "#FFD54F")
             return ("#E8F5E9", "#1B5E20", "#A5D6A7")
-        bg, fg, br = triage_style(label_so)
+        bg, fg, br = triage_style(label_en)
 
         st.markdown(
             f"""
@@ -271,7 +280,7 @@ if st.button("Assess"):
                 font-weight:700;
                 margin-top:6px;
                 margin-bottom:14px;">
-                Result: {label_so}
+                Result: {label_en}
             </div>
             """,
             unsafe_allow_html=True,
@@ -298,7 +307,7 @@ if st.button("Assess"):
                 border:1px solid #90CAF9;
                 box-shadow:0 2px 8px rgba(0,0,0,0.03);
                 font-size:1.02rem;">
-                <strong>Advice:</strong> """ + (TRIAGE_TIPS.get(label_so) or "General advice: if you are concerned about your condition, contact a healthcare facility.") + """
+                <strong>Advice:</strong> """ + (TRIAGE_TIPS.get(label_en) or "General advice: if you are concerned about your condition, contact a healthcare facility.") + """
             </div>
             """,
             unsafe_allow_html=True,
