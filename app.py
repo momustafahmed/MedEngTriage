@@ -201,18 +201,12 @@ ALL_FLAGS = [v["flag"] for v in SYMPTOMS.values()]
 st.title("Talo bixiye Caafimaad")
 st.markdown("Dooro hal calaamad ama wax ka badan, ka dibna waxaa kuusoo muuqan doono su'aalo dheeraad ah oo ku saabsan calaamadaha aad dooratay.")
 
-colA, colB = st.columns(2)
-with colA:
-    age = st.selectbox("Da'da", AGE_GROUP, index=None, placeholder="Dooro")
-with colB:
-    st.caption("Haddii ay jiraan calaamado ama su'aalo aan ku khusayn, ka gudub.")
+st.caption("Haddii ay jiraan calaamado ama su'aalo aan ku khusayn, ka gudub.")
 
 selected = st.multiselect("Calaamadaha aad qabto", list(SYMPTOMS.keys()), placeholder="Dooro calaamad")
 
 # Build payload; default all Has_* to 'maya'
 payload = {}
-if age:
-    payload["Age_Group"] = age
 for flag in ALL_FLAGS:
     payload.setdefault(flag, "maya")
 
@@ -247,9 +241,7 @@ if "Red_Flag_Count" in NUM_COLS:
 # ---------------- Predict ----------------
 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 if st.button("Qiimee"):
-    if not age:
-        st.warning("Fadlan dooro da'da.")
-    elif len(selected) == 0:
+    if len(selected) == 0:
         st.warning("Fadlan dooro ugu yaraan hal calaamad.")
     else:
         x = make_input_df(payload)
