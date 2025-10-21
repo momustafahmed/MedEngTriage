@@ -46,6 +46,16 @@ COUGH_TYPE = ["Dry", "Wet"]
 PAIN_LOC = ["Upper abdomen", "Lower abdomen", "Entire abdomen"]
 AGE_GROUP = ["Child", "Adult", "Elderly"]
 
+# Map UI selections (English) back to model tokens (Somali)
+YN_TO_TOKEN = {"Yes": "haa", "No": "maya"}
+SEV_TO_TOKEN = {"Mild": "fudud", "Moderate": "dhexdhexaad", "Severe": "aad u daran"}
+COUGH_TO_TOKEN = {"Dry": "qalalan", "Wet": "qoyan"}
+PAINLOC_TO_TOKEN = {
+    "Upper abdomen": "caloosha sare",
+    "Lower abdomen": "caloosha hoose",
+    "Entire abdomen": "caloosha oo dhan",
+}
+
 # Duration mapping: show phrases, map to model tokens
 DUR_TOKEN_TO_DISPLAY = {
     "fudud": "Less than 1 day",
@@ -133,17 +143,22 @@ def triage_style(label_so: str):
 def render_select(label, wtype, key):
     placeholder = "Select"
     if wtype == "yn":
-        return st.selectbox(label, YN, index=None, placeholder=placeholder, key=key)
+        val = st.selectbox(label, YN, index=None, placeholder=placeholder, key=key)
+        return None if val is None else YN_TO_TOKEN.get(val, val)
     if wtype == "sev":
-        return st.selectbox(label, SEV, index=None, placeholder=placeholder, key=key)
+        val = st.selectbox(label, SEV, index=None, placeholder=placeholder, key=key)
+        return None if val is None else SEV_TO_TOKEN.get(val, val)
     if wtype == "cough":
-        return st.selectbox(label, COUGH_TYPE, index=None, placeholder=placeholder, key=key)
+        val = st.selectbox(label, COUGH_TYPE, index=None, placeholder=placeholder, key=key)
+        return None if val is None else COUGH_TO_TOKEN.get(val, val)
     if wtype == "painloc":
-        return st.selectbox(label, PAIN_LOC, index=None, placeholder=placeholder, key=key)
+        val = st.selectbox(label, PAIN_LOC, index=None, placeholder=placeholder, key=key)
+        return None if val is None else PAINLOC_TO_TOKEN.get(val, val)
     if wtype == "dur":
         disp = st.selectbox(label, DUR_DISPLAY, index=None, placeholder=placeholder, key=key)
         if disp is None:
             return None
+        # DUR_DISPLAY_TO_TOKEN already returns Somali token
         return DUR_DISPLAY_TO_TOKEN.get(disp, disp)
     return None
 
