@@ -229,10 +229,17 @@ for group in selected:
     cfg = SYMPTOMS[group]
     payload[cfg["flag"]] = "haa"  # user selected this symptom
     with st.expander(group, expanded=True):
-        for (col, label, wtype) in cfg["fields"]:
-            val = render_select(label, wtype, key=f"{group}:{col}")
-            if val is not None:
-                payload[col] = val
+        # Create columns for better layout
+        if len(cfg["fields"]) <= 2:
+            cols = st.columns(len(cfg["fields"]))
+        else:
+            cols = st.columns(2)  # Max 2 columns for better readability
+        
+        for i, (col, label, wtype) in enumerate(cfg["fields"]):
+            with cols[i % len(cols)]:
+                val = render_select(label, wtype, key=f"{group}:{col}")
+                if val is not None:
+                    payload[col] = val
 
 # Derived feature (fever + fatigue)
 if (payload.get("Has_Fever") == "haa") and (payload.get("Has_Fatigue") == "haa"):
