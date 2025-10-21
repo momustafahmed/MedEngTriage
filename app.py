@@ -206,7 +206,14 @@ ALL_FLAGS = [v["flag"] for v in SYMPTOMS.values()]
 
 # ---------------- UI ----------------
 st.title("Medical Triage System")
-st.markdown("Select one or more symptoms, then additional questions will appear about the symptoms you selected.")
+st.markdown("""
+**About this system:**
+This Medical Triage System is designed to assist healthcare providers in prioritizing patient care based on reported symptoms. 
+Utilizing machine learning, it classifies patients into different urgency levels to help streamline the triage process and ensure timely intervention.
+
+**How to use:**
+Select one or more symptoms, then additional questions will appear about the symptoms you selected.
+""")
 
 st.caption("If you have symptoms or questions not covered here, please consult a healthcare provider.")
 
@@ -317,3 +324,12 @@ if st.button("Assess"):
             "Important notice: This is a general assessment to help you understand your condition and next steps. "
             "If you are concerned about your condition, contact a healthcare provider."
         ) + "</div>", unsafe_allow_html=True)
+
+# Footer with developer name
+st.markdown("---")
+st.markdown(
+    "<div style='text-align: center; color: #666; font-size: 0.9rem; margin-top: 20px;'>"
+    "Developed by <strong>Mohamed Mustaf Ahmed</strong>"
+    "</div>", 
+    unsafe_allow_html=True
+)
