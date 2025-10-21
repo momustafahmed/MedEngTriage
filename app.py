@@ -5,7 +5,7 @@ from joblib import load
 import json
 
 # ---------------- Basic setup ----------------
-st.set_page_config(page_title="Talo bixiye Caafimaad", layout="centered")
+st.set_page_config(page_title="Medical Triage System", layout="centered")
 
 # Subtle top spacing
 st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
@@ -39,19 +39,19 @@ except Exception:
 
 EXPECTED_COLS = CAT_COLS + NUM_COLS
 
-# --------------- Choices (Somali) ---------------
-YN = ["haa", "maya"]
-SEV = ["fudud", "dhexdhexaad", "aad u daran"]
-COUGH_TYPE = ["qalalan", "qoyan"]
-PAIN_LOC = ["caloosha sare", "caloosha hoose", "caloosha oo dhan"]
-AGE_GROUP = ["caruur", "qof weyn", "waayeel"]
+# --------------- Choices (English) ---------------
+YN = ["Yes", "No"]
+SEV = ["Mild", "Moderate", "Severe"]
+COUGH_TYPE = ["Dry", "Wet"]
+PAIN_LOC = ["Upper abdomen", "Lower abdomen", "Entire abdomen"]
+AGE_GROUP = ["Child", "Adult", "Elderly"]
 
 # Duration mapping: show phrases, map to model tokens
 DUR_TOKEN_TO_DISPLAY = {
-    "fudud": "hal maalin iyo ka yar",
-    "dhexdhexaad": "labo illaa sadax maalin",
-    "dhexdhexaad ah": "labo illaa sadax maalin",
-    "aad u daran": "sadax maalin iyo ka badan",
+    "fudud": "Less than 1 day",
+    "dhexdhexaad": "2-3 days",
+    "dhexdhexaad ah": "2-3 days",
+    "aad u daran": "More than 3 days",
 }
 # When user picks a phrase, convert back to token for model input
 DUR_DISPLAY_TO_TOKEN = {
@@ -62,18 +62,18 @@ DUR_DISPLAY = list(dict.fromkeys(DUR_TOKEN_TO_DISPLAY.values()))
 
 # --------------- Default one-sentence tips ---------------
 TRIAGE_TIPS = {
-    "Xaalad fudud (Daryeel guri)":
-        "Ku naso guriga, cab biyo badan, cun cunto fudud, qaado xanuun baabi'iye ama qandho dajiye haddii aad u baahantahay, la soco calaamadahaaga 24 saac, haddii ay kasii daraan la xiriir xarun caafimaad.",
-    "Xaalad dhax dhaxaad eh (Bukaan socod)":
-        "Booqo xarun caafimaad 24 saacadood gudahood si lagu qiimeeyo, qaado warqadaha daawooyinkii hore haddii ay jiraan, cab biyo badan.",
-    "Xaalad dhax dhaxaad ah (Bukaan socod)":
-        "Booqo xarun caafimaad 24 saacadood gudahood si lagu qiimeeyo, qaado warqadaha daawooyinkii hore haddii ay jiraan, cab biyo badan.",
-    "Xaalad deg deg ah":
-        "Si deg deg ah u gaar isbitaalka, ha isku dayin daaweynta guriga, haddii ay suurtagal tahay raac qof kugu weheliya, qaado warqadaha daawooyinkii hore haddii ay jiraan."
+    "Mild condition (Home care)":
+        "Rest at home, drink plenty of fluids, eat light meals, take pain relievers or fever reducers if needed, monitor your symptoms for 24 hours, if they worsen contact a healthcare facility.",
+    "Moderate condition (Outpatient care)":
+        "Visit a healthcare facility within 24 hours for evaluation, bring any previous medication records if available, drink plenty of fluids.",
+    "Moderate condition (Outpatient care)":
+        "Visit a healthcare facility within 24 hours for evaluation, bring any previous medication records if available, drink plenty of fluids.",
+    "Emergency condition":
+        "Go to the hospital immediately, do not attempt home treatment, if possible have someone accompany you, bring any previous medication records if available."
 }
 EXTRA_NOTICE = (
-    "Farriin gaar ah: Tan waa qiimeyn guud oo kaa caawinaysa inaad fahanto xaaladdaada iyo waxa xiga. "
-    "Haddii aad ka welwelsan tahay xaaladdaada, la xiriir dhakhtar."
+    "Important notice: This is a general assessment to help you understand your condition and next steps. "
+    "If you are concerned about your condition, contact a healthcare provider."
 )
 
 # --------------- Helpers ---------------
@@ -117,14 +117,14 @@ def triage_style(label_so: str):
     Green (home care), Amber (outpatient), Red (emergency).
     """
     t = (label_so or "").lower()
-    if "deg deg" in t:
+    if "emergency" in t or "urgent" in t:
         return ("#FFEBEE", "#B71C1C", "#EF9A9A")
-    if "dhax dhaxaad" in t:
+    if "moderate" in t or "outpatient" in t:
         return ("#FFF8E1", "#8D6E00", "#FFD54F")
     return ("#E8F5E9", "#1B5E20", "#A5D6A7")
 
 def render_select(label, wtype, key):
-    placeholder = "Dooro"
+    placeholder = "Select"
     if wtype == "yn":
         return st.selectbox(label, YN, index=None, placeholder=placeholder, key=key)
     if wtype == "sev":
@@ -140,70 +140,70 @@ def render_select(label, wtype, key):
         return DUR_DISPLAY_TO_TOKEN.get(disp, disp)
     return None
 
-# --------------- Symptom groups (Somali-only, NO Has_* question in UI) ---------------
+# --------------- Symptom groups (English) ---------------
 SYMPTOMS = {
-    "Qandho": {
+    "Fever": {
         "flag": "Has_Fever",
         "fields": [
-            ("Fever_Level", "Heerka qandhada", "sev"),
-            ("Fever_Duration_Level", "Mudada qandhada", "dur"),
-            ("Chills", "Qarqaryo", "yn"),
+            ("Fever_Level", "Fever severity", "sev"),
+            ("Fever_Duration_Level", "Fever duration", "dur"),
+            ("Chills", "Chills", "yn"),
         ],
     },
-    "Qufac": {
+    "Cough": {
         "flag": "Has_Cough",
         "fields": [
-            ("Cough_Type", "Nuuca qufaca", "cough"),
-            ("Cough_Duration_Level", "Mudada qufaca", "dur"),
-            ("Blood_Cough", "Qufac dhiig", "yn"),
-            ("Breath_Difficulty", "Neef qabasho", "yn"),
+            ("Cough_Type", "Type of cough", "cough"),
+            ("Cough_Duration_Level", "Cough duration", "dur"),
+            ("Blood_Cough", "Blood in cough", "yn"),
+            ("Breath_Difficulty", "Breathing difficulty", "yn"),
         ],
     },
-    "Madax-xanuun": {
+    "Headache": {
         "flag": "Has_Headache",
         "fields": [
-            ("Headache_Severity", "Heerka madax-xanuunka", "sev"),
-            ("Headache_Duration_Level", "Mudada madax-xanuunka", "dur"),
-            ("Photophobia", "Iftiinka ku dhibaya", "yn"),
-            ("Neck_Stiffness", "Qoor adkaaday", "yn"),
+            ("Headache_Severity", "Headache severity", "sev"),
+            ("Headache_Duration_Level", "Headache duration", "dur"),
+            ("Photophobia", "Light sensitivity", "yn"),
+            ("Neck_Stiffness", "Neck stiffness", "yn"),
         ],
     },
-    "Calool-xanuun": {
+    "Abdominal Pain": {
         "flag": "Has_Abdominal_Pain",
         "fields": [
-            ("Pain_Location", "Goobta xanuunka caloosha", "painloc"),
-            ("Pain_Duration_Level", "Mudada xanuunka caloosha", "dur"),
-            ("Nausea", "Lallabbo", "yn"),
-            ("Diarrhea", "Shuban", "yn"),
+            ("Pain_Location", "Pain location", "painloc"),
+            ("Pain_Duration_Level", "Pain duration", "dur"),
+            ("Nausea", "Nausea", "yn"),
+            ("Diarrhea", "Diarrhea", "yn"),
         ],
     },
-    "Daal": {
+    "Fatigue": {
         "flag": "Has_Fatigue",
         "fields": [
-            ("Fatigue_Severity", "Heerka daalka", "sev"),
-            ("Fatigue_Duration_Level", "Mudada daalka", "dur"),
-            ("Weight_Loss", "Miisaan dhimista", "yn"),
+            ("Fatigue_Severity", "Fatigue severity", "sev"),
+            ("Fatigue_Duration_Level", "Fatigue duration", "dur"),
+            ("Weight_Loss", "Weight loss", "yn"),
         ],
     },
-    "Matag": {
+    "Vomiting": {
         "flag": "Has_Vomiting",
         "fields": [
-            ("Vomiting_Severity", "Heerka matagga", "sev"),
-            ("Vomiting_Duration_Level", "Mudada matagga", "dur"),
-            ("Blood_Vomit", "Matag dhiig", "yn"),
-            ("Unable_To_Keep_Fluids", "Aan ceshan karin dareeraha", "yn"),
+            ("Vomiting_Severity", "Vomiting severity", "sev"),
+            ("Vomiting_Duration_Level", "Vomiting duration", "dur"),
+            ("Blood_Vomit", "Blood in vomit", "yn"),
+            ("Unable_To_Keep_Fluids", "Unable to keep fluids down", "yn"),
         ],
     },
 }
 ALL_FLAGS = [v["flag"] for v in SYMPTOMS.values()]
 
 # ---------------- UI ----------------
-st.title("Talo bixiye Caafimaad")
-st.markdown("Dooro hal calaamad ama wax ka badan, ka dibna waxaa kuusoo muuqan doono su'aalo dheeraad ah oo ku saabsan calaamadaha aad dooratay.")
+st.title("Medical Triage System")
+st.markdown("Select one or more symptoms, then additional questions will appear about the symptoms you selected.")
 
-st.caption("Haddii ay jiraan calaamado ama su'aalo aan ku khusayn, ka gudub.")
+st.caption("If you have symptoms or questions not covered here, please consult a healthcare provider.")
 
-selected = st.multiselect("Calaamadaha aad qabto", list(SYMPTOMS.keys()), placeholder="Dooro calaamad")
+selected = st.multiselect("Symptoms you are experiencing", list(SYMPTOMS.keys()), placeholder="Select symptoms")
 
 # Build payload; default all Has_* to 'maya'
 payload = {}
@@ -240,9 +240,9 @@ if "Red_Flag_Count" in NUM_COLS:
 
 # ---------------- Predict ----------------
 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-if st.button("Qiimee"):
+if st.button("Assess"):
     if len(selected) == 0:
-        st.warning("Fadlan dooro ugu yaraan hal calaamad.")
+        st.warning("Please select at least one symptom.")
     else:
         x = make_input_df(payload)
         y_pred = pipe.predict(x)[0]
@@ -251,9 +251,9 @@ if st.button("Qiimee"):
         # Light, modern result card with dynamic colors
         def triage_style(label_so: str):
             t = (label_so or "").lower()
-            if "deg deg" in t:
+            if "emergency" in t or "urgent" in t:
                 return ("#FFEBEE", "#B71C1C", "#EF9A9A")
-            if "dhax dhaxaad" in t:
+            if "moderate" in t or "outpatient" in t:
                 return ("#FFF8E1", "#8D6E00", "#FFD54F")
             return ("#E8F5E9", "#1B5E20", "#A5D6A7")
         bg, fg, br = triage_style(label_so)
@@ -271,7 +271,7 @@ if st.button("Qiimee"):
                 font-weight:700;
                 margin-top:6px;
                 margin-bottom:14px;">
-                Natiijada: {label_so}
+                Result: {label_so}
             </div>
             """,
             unsafe_allow_html=True,
@@ -279,14 +279,14 @@ if st.button("Qiimee"):
 
         # Tips card (light blue)
         TRIAGE_TIPS = {
-            "Xaalad fudud (Daryeel guri)":
-                "Ku naso guriga, cab biyo badan, cun cunto fudud, qaado xanuun baabi'iye ama qandho dajiye haddii aad u baahantahay, la soco calaamadahaaga 24 saac, haddii ay kasii daraan la xiriir xarun caafimaad.",
-            "Xaalad dhax dhaxaad eh (Bukaan socod)":
-                "Booqo xarun caafimaad 24 saacadood gudahood si lagu qiimeeyo, qaado warqadaha daawooyinkii hore haddii ay jiraan, cab biyo badan.",
-            "Xaalad dhax dhaxaad ah (Bukaan socod)":
-                "Booqo xarun caafimaad 24 saacadood gudahood si lagu qiimeeyo, qaado warqadaha daawooyinkii hore haddii ay jiraan, cab biyo badan.",
-            "Xaalad deg deg ah":
-                "Si deg deg ah u gaar isbitaalka, ha isku dayin daaweynta guriga, haddii ay suurtagal tahay raac qof kugu weheliya, qaado warqadaha daawooyinkii hore haddii ay jiraan."
+            "Mild condition (Home care)":
+                "Rest at home, drink plenty of fluids, eat light meals, take pain relievers or fever reducers if needed, monitor your symptoms for 24 hours, if they worsen contact a healthcare facility.",
+            "Moderate condition (Outpatient care)":
+                "Visit a healthcare facility within 24 hours for evaluation, bring any previous medication records if available, drink plenty of fluids.",
+            "Moderate condition (Outpatient care)":
+                "Visit a healthcare facility within 24 hours for evaluation, bring any previous medication records if available, drink plenty of fluids.",
+            "Emergency condition":
+                "Go to the hospital immediately, do not attempt home treatment, if possible have someone accompany you, bring any previous medication records if available."
         }
         st.markdown(
             """
@@ -298,13 +298,13 @@ if st.button("Qiimee"):
                 border:1px solid #90CAF9;
                 box-shadow:0 2px 8px rgba(0,0,0,0.03);
                 font-size:1.02rem;">
-                <strong>Talo:</strong> """ + (TRIAGE_TIPS.get(label_so) or "La-talin guud: haddii aad ka welwelsan tahay xaaladdaada, la xiriir xarun caafimaad.") + """
+                <strong>Advice:</strong> """ + (TRIAGE_TIPS.get(label_so) or "General advice: if you are concerned about your condition, contact a healthcare facility.") + """
             </div>
             """,
             unsafe_allow_html=True,
         )
 
         st.markdown("<div style='margin-top:12px; color:#374151;'>" + (
-            "Farriin gaar ah: Tan waa qiimeyn guud oo kaa caawinaysa inaad fahanto xaaladdaada iyo waxa xiga. "
-            "Haddii aad ka welwelsan tahay xaaladdaada, la xiriir dhakhtar."
+            "Important notice: This is a general assessment to help you understand your condition and next steps. "
+            "If you are concerned about your condition, contact a healthcare provider."
         ) + "</div>", unsafe_allow_html=True)
